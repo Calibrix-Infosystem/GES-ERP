@@ -36,12 +36,12 @@
 
   <!-- CENTER POPUP TASK MODAL ALERT -->
   <div id="task-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border border-slate-100">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border border-slate-100 transform transition-all">
       <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
         <i class="fa-solid fa-bell"></i>
       </div>
       <h3 class="text-lg font-bold text-slate-900" id="modal-task-title">New Task Assigned!</h3>
-      <p class="text-xs text-slate-500 mt-2" id="modal-task-desc">You have received a new assignment from Principal/HOD.</p>
+      <p class="text-xs text-slate-500 mt-2" id="modal-task-desc">You have received a new assignment.</p>
       <div class="mt-6 flex items-center gap-2">
         <button onclick="acknowledgeModalTask()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-md transition">
           Acknowledge Now
@@ -57,7 +57,7 @@
   <div id="submit-work-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
       <h3 class="text-base font-bold text-slate-900 mb-2">Submit Task Work Details</h3>
-      <p class="text-xs text-slate-500 mb-4">Add your submission note and attach completed files for HOD/Principal review.</p>
+      <p class="text-xs text-slate-500 mb-4">Add your submission note and attach completed files for review.</p>
       
       <div class="space-y-4">
         <div>
@@ -80,9 +80,42 @@
     </div>
   </div>
 
+  <!-- LOGOUT APPRECIATION SCREEN OVERLAY -->
+  <div id="appreciation-screen" class="fixed inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 z-50 flex items-center justify-center hidden p-4">
+    <div class="max-w-md w-full bg-white rounded-3xl p-8 text-center shadow-2xl border border-slate-100 relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600"></div>
+      
+      <div id="appreciation-avatar" class="w-24 h-24 rounded-full bg-blue-100 text-blue-600 font-bold text-3xl flex items-center justify-center mx-auto mb-4 border-4 border-emerald-50 shadow-md overflow-hidden">
+        U
+      </div>
+      
+      <h2 id="appreciation-user-name" class="text-xl font-bold text-slate-900">Dr. John Doe</h2>
+      <p class="text-xs text-emerald-600 font-semibold tracking-wide uppercase mt-1">Thank you for your dedicated service today!</p>
+      
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 my-5 text-left text-xs space-y-2">
+        <div class="flex justify-between border-b border-slate-200/60 pb-2">
+          <span class="text-slate-500"><i class="fa-solid fa-clock text-emerald-600 mr-1.5"></i> Clock In Time:</span>
+          <span id="appreciation-clockin" class="font-bold text-slate-800">--:--</span>
+        </div>
+        <div class="flex justify-between pt-1">
+          <span class="text-slate-500"><i class="fa-solid fa-right-from-bracket text-rose-600 mr-1.5"></i> Clock Out Time:</span>
+          <span id="appreciation-clockout" class="font-bold text-slate-800">--:--</span>
+        </div>
+      </div>
+
+      <div class="p-4 bg-emerald-50/60 border border-emerald-100 rounded-2xl mb-6">
+        <p class="text-xs text-slate-700 italic leading-relaxed">
+          "Great achievements are built on daily efforts. Your hard work and commitment contribute immensely to GES College of Pharmacy!"
+        </p>
+      </div>
+
+      <p class="text-[11px] text-slate-400">Redirecting to login in <span id="appreciation-countdown" class="font-bold text-blue-600">60</span> seconds...</p>
+      <button onclick="finishLogoutNow()" class="mt-3 text-xs font-semibold text-blue-600 hover:underline">Click to Redirect Immediately →</button>
+    </div>
+  </div>
+
   <!-- AUTH CONTAINER -->
   <div id="auth-container" class="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 p-4">
-    <!-- LOGIN BOX -->
     <div id="login-box" class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 border border-slate-100 relative overflow-hidden">
       <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
       <div class="text-center mb-8">
@@ -118,7 +151,6 @@
       </div>
     </div>
 
-    <!-- REGISTER BOX -->
     <div id="register-box" class="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-8 border border-slate-100 hidden relative overflow-hidden">
       <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-500 to-teal-600"></div>
       <div class="text-center mb-6">
@@ -173,11 +205,8 @@
 
   <!-- MAIN DASHBOARD SYSTEM -->
   <div id="app-container" class="h-screen w-full flex bg-slate-100 hidden relative">
-    
-    <!-- MOBILE OVERLAY -->
     <div id="mobile-sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 z-20 hidden md:hidden"></div>
 
-    <!-- SIDEBAR NAVIGATION -->
     <aside id="app-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between p-4 shadow-xl z-30 fixed md:relative h-full transition-transform duration-300 -translate-x-full md:translate-x-0">
       <div>
         <div class="flex items-center justify-between px-3 py-4 border-b border-slate-800 mb-6">
@@ -202,7 +231,7 @@
           <button onclick="switchTab(event, 'tasks')" id="nav-tasks" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
             <i class="fa-solid fa-tasks w-5"></i> Tasks Matrix
           </button>
-          <button id="nav-assign" onclick="switchTab(event, 'assign-task')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white hidden">
+          <button id="nav-assign" onclick="switchTab(event, 'assign-task')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
             <i class="fa-solid fa-plus-circle w-5"></i> Assign Task
           </button>
           <button onclick="switchTab(event, 'daily-work')" id="nav-daily-work" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
@@ -218,15 +247,13 @@
       </div>
 
       <div class="border-t border-slate-800 pt-4">
-        <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition">
+        <button onclick="triggerLogoutAppreciation()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition">
           <i class="fa-solid fa-right-from-bracket w-5"></i> Sign Out
         </button>
       </div>
     </aside>
 
-    <!-- MAIN CONTENT VIEWPORT -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden">
-      <!-- TOP NAVIGATION BAR -->
       <header class="bg-white border-b border-slate-200 px-4 md:px-8 py-4 flex items-center justify-between shadow-sm z-10">
         <div class="flex items-center gap-3">
           <button onclick="toggleMobileSidebar()" class="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
@@ -239,11 +266,6 @@
         </div>
 
         <div class="flex items-center gap-4">
-          <!-- Official Leave Alert Badge for Staff -->
-          <div id="official-leave-banner" class="hidden px-3 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-lg border border-amber-200">
-            <i class="fa-solid fa-circle-exclamation mr-1"></i> <span id="official-leave-text">Official On Leave</span>
-          </div>
-
           <button onclick="refreshDashboard(true)" class="p-2.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-xl transition" title="Refresh Data">
             <i class="fa-solid fa-rotate-right"></i>
           </button>
@@ -260,97 +282,77 @@
         </div>
       </header>
 
-      <!-- VIEWPORT BODY -->
       <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
 
-        <!-- QUICK ATTENDANCE ACTION BAR -->
+        <div id="leadership-leave-alert" class="bg-amber-50 border border-amber-200 p-4 rounded-2xl hidden flex items-center gap-3 text-amber-800 text-xs font-medium">
+          <i class="fa-solid fa-circle-info text-amber-600 text-base"></i>
+          <span id="leadership-leave-text">Principal Sir / HOD is On Leave today.</span>
+        </div>
+
         <section class="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-200">
           <div class="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                <i class="fa-solid fa-clock text-blue-600"></i> Attendance & On-Duty Status Tracker
+                <i class="fa-solid fa-clock text-blue-600"></i> Attendance Tracker
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Mark your daily presence or official status for administrative record</p>
+              <p class="text-xs text-slate-500 mt-0.5">Mark your presence or official duty status for today</p>
             </div>
-            <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-              <button onclick="markAttendance('Clock In')" class="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
-                <i class="fa-solid fa-right-to-bracket mr-1"></i> Clock In
-              </button>
-              <button onclick="markAttendance('Clock Out')" class="flex-1 sm:flex-none px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition">
-                <i class="fa-solid fa-right-from-bracket mr-1"></i> Clock Out
-              </button>
-              <button onclick="markAttendance('On Duty')" class="flex-1 sm:flex-none px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-semibold shadow-sm transition">
-                <i class="fa-solid fa-briefcase mr-1"></i> On Duty (OD)
-              </button>
-              <button onclick="markAttendance('On Leave')" class="flex-1 sm:flex-none px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
-                <i class="fa-solid fa-umbrella-beach mr-1"></i> Leave
-              </button>
-              <button onclick="markAttendance('Half Day')" class="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
-                <i class="fa-solid fa-hourglass-half mr-1"></i> Half Day
-              </button>
+            
+            <div id="attendance-actions-container" class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             </div>
           </div>
         </section>
 
-        <!-- PRINCIPAL / HOD LIVE ATTENDANCE METRICS BAR -->
-        <section id="admin-attendance-metrics" class="grid grid-cols-2 sm:grid-cols-4 gap-4 hidden">
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-user-check"></i></div>
-            <div>
-              <div class="text-xs text-slate-500">Clock In</div>
-              <div id="metric-clockin" class="text-lg font-bold text-slate-800">0</div>
+        <section id="admin-attendance-summary" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hidden">
+          <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-users text-blue-600"></i> Today's Staff Attendance Summary
+          </h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+              <div class="text-2xl font-bold text-emerald-700" id="count-clockin">0</div>
+              <div class="text-xs text-emerald-600 font-medium mt-1">Clocked In (Present)</div>
             </div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-briefcase"></i></div>
-            <div>
-              <div class="text-xs text-slate-500">On Duty (OD)</div>
-              <div id="metric-onduty" class="text-lg font-bold text-slate-800">0</div>
+            <div class="p-4 bg-amber-50 rounded-xl border border-amber-100">
+              <div class="text-2xl font-bold text-amber-700" id="count-onduty">0</div>
+              <div class="text-xs text-amber-600 font-medium mt-1">On Duty (OD)</div>
             </div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-hourglass-half"></i></div>
-            <div>
-              <div class="text-xs text-slate-500">Half Day</div>
-              <div id="metric-halfday" class="text-lg font-bold text-slate-800">0</div>
+            <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+              <div class="text-2xl font-bold text-indigo-700" id="count-halfday">0</div>
+              <div class="text-xs text-indigo-600 font-medium mt-1">Half Day</div>
             </div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-umbrella-beach"></i></div>
-            <div>
-              <div class="text-xs text-slate-500">On Leave</div>
-              <div id="metric-leave" class="text-lg font-bold text-slate-800">0</div>
+            <div class="p-4 bg-rose-50 rounded-xl border border-rose-100">
+              <div class="text-2xl font-bold text-rose-700" id="count-onleave">0</div>
+              <div class="text-xs text-rose-600 font-medium mt-1">On Leave</div>
             </div>
-          </div>
-        </section>
-
-        <!-- STAFF PERFORMANCE & TASK SUMMARY CARDS -->
-        <section id="staff-task-summary-cards" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div onclick="switchTab(null, 'tasks')" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-blue-400 transition">
-            <div class="text-xs text-slate-500">Total Tasks</div>
-            <div id="summary-total-tasks" class="text-lg font-bold text-slate-800">0</div>
-          </div>
-          <div onclick="switchTab(null, 'tasks')" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-amber-400 transition">
-            <div class="text-xs text-amber-600 font-semibold">Pending Tasks</div>
-            <div id="summary-pending-tasks" class="text-lg font-bold text-amber-600">0</div>
-          </div>
-          <div onclick="switchTab(null, 'tasks')" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-emerald-400 transition">
-            <div class="text-xs text-emerald-600 font-semibold">Completed</div>
-            <div id="summary-completed-tasks" class="text-lg font-bold text-emerald-600">0</div>
-          </div>
-          <div onclick="switchTab(null, 'tasks')" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-rose-400 transition">
-            <div class="text-xs text-rose-600 font-semibold">Returned</div>
-            <div id="summary-returned-tasks" class="text-lg font-bold text-rose-600">0</div>
           </div>
         </section>
 
         <!-- 1. DASHBOARD TAB -->
         <div id="tab-dashboard" class="space-y-6">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div onclick="switchTab(event, 'tasks')" class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:border-blue-400 transition">
+              <span class="text-xs text-slate-500 font-medium">Total Assigned Tasks</span>
+              <div class="text-2xl font-bold text-slate-800 mt-1" id="dash-total-tasks">0</div>
+            </div>
+            <div onclick="switchTab(event, 'tasks')" class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:border-amber-400 transition">
+              <span class="text-xs text-amber-600 font-medium">Pending Tasks</span>
+              <div class="text-2xl font-bold text-amber-600 mt-1" id="dash-pending-tasks">0</div>
+            </div>
+            <div onclick="switchTab(event, 'tasks')" class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:border-emerald-400 transition">
+              <span class="text-xs text-emerald-600 font-medium">Approved / Success</span>
+              <div class="text-2xl font-bold text-emerald-600 mt-1" id="dash-approved-tasks">0</div>
+            </div>
+            <div onclick="switchTab(event, 'tasks')" class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:border-rose-400 transition">
+              <span class="text-xs text-rose-600 font-medium">Returned Tasks</span>
+              <div class="text-2xl font-bold text-rose-600 mt-1" id="dash-returned-tasks">0</div>
+            </div>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
               <div>
                 <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
-                  <i class="fa-solid fa-bullhorn text-blue-600"></i> Principal & HOD Broadcast Announcements
+                  <i class="fa-solid fa-bullhorn text-blue-600"></i> Announcements
                 </h3>
                 <div id="announcement-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
                   <p class="text-xs text-slate-400 italic text-center py-4">No broadcasts posted.</p>
@@ -369,7 +371,7 @@
 
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
               <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Recent Staff Activity Logs
+                <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Recent Activity Logs
               </h3>
               <div id="daily-work-summary" class="space-y-3 max-h-80 overflow-y-auto pr-2">
                 <p class="text-xs text-slate-400 italic text-center py-4">No recent work logs.</p>
@@ -393,7 +395,7 @@
                     <th class="p-4">Assigned By / To</th>
                     <th class="p-4">Due Date</th>
                     <th class="p-4">Status</th>
-                    <th class="p-4">Task Attachments</th>
+                    <th class="p-4">Attachments</th>
                     <th class="p-4">Action</th>
                   </tr>
                 </thead>
@@ -467,39 +469,21 @@
           </div>
         </div>
 
-        <!-- 5. COLLEGE MAP TAB (PROPER HIERARCHY TREE) -->
-        <div id="tab-college-map" class="hidden">
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-8">
-            <h3 class="font-bold text-slate-800 text-base border-b border-slate-100 pb-3">GES College Hierarchy Map</h3>
-            
-            <!-- PRINCIPAL NODE -->
-            <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">College Principal</h4>
-              <div id="tree-principal-node" class="flex justify-center">
-                <p class="text-xs text-slate-400">Loading Principal record...</p>
-              </div>
-            </div>
+        <!-- 5. FACULTY MAP TAB -->
+        <div id="tab-college-map" class="hidden space-y-6">
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <h4 class="text-xs font-bold text-blue-600 tracking-wider uppercase mb-3">Institutional Principal</h4>
+            <div id="map-principal-container" class="grid grid-cols-1 max-w-sm"></div>
+          </div>
 
-            <div class="w-full border-t border-slate-200"></div>
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <h4 class="text-xs font-bold text-indigo-600 tracking-wider uppercase mb-3">Heads of Department (HOD)</h4>
+            <div id="map-hod-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+          </div>
 
-            <!-- HOD NODE -->
-            <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">Head of Departments (HOD)</h4>
-              <div id="tree-hod-node" class="grid grid-cols-1 sm:grid-cols-2 gap-4 justify-center">
-                <p class="text-xs text-slate-400 text-center col-span-2">Loading HOD records...</p>
-              </div>
-            </div>
-
-            <div class="w-full border-t border-slate-200"></div>
-
-            <!-- STAFF NODE -->
-            <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">Faculty & Teaching Staff</h4>
-              <div id="tree-staff-node" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <p class="text-xs text-slate-400 text-center col-span-3">Loading Faculty records...</p>
-              </div>
-            </div>
-
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <h4 class="text-xs font-bold text-slate-600 tracking-wider uppercase mb-3">Faculty & Staff Members</h4>
+            <div id="map-staff-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
           </div>
         </div>
 
@@ -566,7 +550,7 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbypgCFn_UonywRr3xE9OeEx6wkeO7jSB_dKFqg3l8z4onvEb05ol84lpGihWoxsEk3law/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwQ4HfIWGtMiJihzIycD4P-d0WY9pMfyF7Ts377CMPpTM3dUmM9YHNYik8AQPk37aQO0Q/exec";
 
     let currentUser = null;
     let dashboardCache = null;
@@ -574,19 +558,8 @@
     let modalTaskForAck = null;
     let trackedTaskIds = new Set();
     let autoRefreshTimer = null;
-
-    // Check Local Storage Auto Login
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedUser = localStorage.getItem('ges_erp_user');
-      if(savedUser) {
-        try {
-          currentUser = JSON.parse(savedUser);
-          initApp();
-        } catch(e) {
-          localStorage.removeItem('ges_erp_user');
-        }
-      }
-    });
+    let logoutCountdownTimer = null;
+    let userAttendanceStatusToday = null;
 
     function showLoader(text = "Please wait, updating record...") {
       document.getElementById('loader-text').innerText = text;
@@ -647,6 +620,19 @@
       return url;
     }
 
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedUser = localStorage.getItem('ges_erp_user');
+      if (savedUser) {
+        try {
+          currentUser = JSON.parse(savedUser);
+          requestNotificationPermission();
+          initApp();
+        } catch (e) {
+          localStorage.removeItem('ges_erp_user');
+        }
+      }
+    });
+
     async function handleLogin(e) {
       e.preventDefault();
       const email = document.getElementById('login-email').value;
@@ -698,9 +684,8 @@
       updateUserDisplayHeaders();
 
       if(currentUser.role === 'Principal' || currentUser.role === 'HOD') {
-        document.getElementById('nav-assign').classList.remove('hidden');
+        document.getElementById('admin-attendance-summary').classList.remove('hidden');
         document.getElementById('announcement-post-box').classList.remove('hidden');
-        document.getElementById('admin-attendance-metrics').classList.remove('hidden');
       }
 
       renderProfile();
@@ -709,7 +694,7 @@
       if (autoRefreshTimer) clearInterval(autoRefreshTimer);
       autoRefreshTimer = setInterval(() => {
         refreshDashboard(false);
-      }, 30000);
+      }, 15000);
     }
 
     function updateUserDisplayHeaders() {
@@ -729,44 +714,145 @@
       const res = await apiCall('getDashboardData', { userEmail: currentUser.email, role: currentUser.role }, !showSpinner);
       if(res.status === 'success') {
         dashboardCache = res.data;
+        processAttendanceState();
+        checkLeadershipLeaveState();
         checkNewTaskPopups();
+        renderDashboardTaskMetrics();
         renderTasks();
         renderAnnouncements();
         renderDailyWork();
         renderHierarchy();
-        renderAttendanceMetrics();
-        renderOfficialLeaveBanner();
         populateAssignDropdown();
       }
     }
 
-    function renderAttendanceMetrics() {
-      if(!dashboardCache.attendanceSummary) return;
-      const s = dashboardCache.attendanceSummary;
-      document.getElementById('metric-clockin').innerText = s.clockIn;
-      document.getElementById('metric-onduty').innerText = s.onDuty;
-      document.getElementById('metric-halfday').innerText = s.halfDay;
-      document.getElementById('metric-leave').innerText = s.leave;
+    // FIXED ATTENDANCE FILTER LOGIC
+    function processAttendanceState() {
+      const attList = dashboardCache.attendanceToday || [];
+      const userAtt = attList.filter(a => a.email === currentUser.email);
+      
+      // Find entries for Clock In and Clock Out specifically
+      const clockInRecord = userAtt.find(a => a.status === 'Clock In');
+      const clockOutRecord = userAtt.find(a => a.status === 'Clock Out');
+
+      // Fallback: If Clock In not found but user performed another action
+      const anyActionRecord = userAtt.length > 0 ? userAtt[0] : null;
+
+      const container = document.getElementById('attendance-actions-container');
+      container.innerHTML = '';
+
+      if (clockInRecord || anyActionRecord) {
+        const displayClockInTime = clockInRecord ? clockInRecord.time : (anyActionRecord ? anyActionRecord.time : null);
+        const displayClockOutTime = clockOutRecord ? clockOutRecord.time : null;
+
+        userAttendanceStatusToday = { 
+          clockIn: displayClockInTime, 
+          clockOut: displayClockOutTime 
+        };
+
+        if (clockInRecord) {
+          container.innerHTML += `
+            <div class="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-emerald-600"></i> Clocked In at ${clockInRecord.time}
+            </div>
+          `;
+        } else if (anyActionRecord) {
+          container.innerHTML += `
+            <div class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-xl text-xs font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-clock text-blue-600"></i> Status: ${anyActionRecord.status} (${anyActionRecord.time})
+            </div>
+          `;
+        }
+
+        if (!clockOutRecord) {
+          container.innerHTML += `
+            <button onclick="markAttendance('Clock Out')" class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+              <i class="fa-solid fa-right-from-bracket mr-1"></i> Clock Out
+            </button>
+            <button onclick="markAttendance('Half Day')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+              <i class="fa-solid fa-hourglass-half mr-1"></i> Half Day
+            </button>
+          `;
+        } else {
+          container.innerHTML += `
+            <div class="px-3 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-right-from-bracket text-slate-600"></i> Clocked Out at ${clockOutRecord.time}
+            </div>
+          `;
+        }
+      } else {
+        userAttendanceStatusToday = null;
+        container.innerHTML = `
+          <button onclick="markAttendance('Clock In')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+            <i class="fa-solid fa-right-to-bracket mr-1"></i> Clock In
+          </button>
+          <button onclick="markAttendance('On Duty')" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+            <i class="fa-solid fa-briefcase mr-1"></i> On Duty (OD)
+          </button>
+          <button onclick="markAttendance('On Leave')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+            <i class="fa-solid fa-umbrella-beach mr-1"></i> Leave
+          </button>
+          <button onclick="markAttendance('Half Day')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+            <i class="fa-solid fa-hourglass-half mr-1"></i> Half Day
+          </button>
+        `;
+      }
+
+      if (currentUser.role === 'Principal' || currentUser.role === 'HOD') {
+        let clockInCount = 0, odCount = 0, halfCount = 0, leaveCount = 0;
+        attList.forEach(a => {
+          if (a.status === 'Clock In') clockInCount++;
+          if (a.status === 'On Duty') odCount++;
+          if (a.status === 'Half Day') halfCount++;
+          if (a.status === 'On Leave') leaveCount++;
+        });
+
+        document.getElementById('count-clockin').innerText = clockInCount;
+        document.getElementById('count-onduty').innerText = odCount;
+        document.getElementById('count-halfday').innerText = halfCount;
+        document.getElementById('count-onleave').innerText = leaveCount;
+      }
     }
 
-    function renderOfficialLeaveBanner() {
-      if(!dashboardCache.attendanceSummary) return;
-      const banner = document.getElementById('official-leave-banner');
-      const text = document.getElementById('official-leave-text');
-      const s = dashboardCache.attendanceSummary;
+    function checkLeadershipLeaveState() {
+      const attList = dashboardCache.attendanceToday || [];
+      const users = dashboardCache.users || [];
 
-      if(s.principalLeave && s.hodLeave) {
-        text.innerText = "Principal Sir & HOD: On Leave Today";
-        banner.classList.remove('hidden');
-      } else if(s.principalLeave) {
-        text.innerText = "Principal Sir: On Leave Today";
-        banner.classList.remove('hidden');
-      } else if(s.hodLeave) {
-        text.innerText = "HOD: On Leave Today";
-        banner.classList.remove('hidden');
-      } else {
-        banner.classList.add('hidden');
+      const principalUser = users.find(u => u.role === 'Principal');
+      const hodUsers = users.filter(u => u.role === 'HOD');
+
+      let alerts = [];
+
+      if (principalUser) {
+        const pAtt = attList.find(a => a.email === principalUser.email && a.status === 'On Leave');
+        if (pAtt) alerts.push("Principal Sir is On Leave today");
       }
+
+      hodUsers.forEach(h => {
+        const hAtt = attList.find(a => a.email === h.email && a.status === 'On Leave');
+        if (hAtt) alerts.push(`HOD (${h.name}) is On Leave today`);
+      });
+
+      const alertBox = document.getElementById('leadership-leave-alert');
+      if (alerts.length > 0 && currentUser.role === 'Faculty') {
+        document.getElementById('leadership-leave-text').innerText = alerts.join(" | ");
+        alertBox.classList.remove('hidden');
+      } else {
+        alertBox.classList.add('hidden');
+      }
+    }
+
+    function renderDashboardTaskMetrics() {
+      const tasks = dashboardCache.tasks || [];
+      const total = tasks.length;
+      const pending = tasks.filter(t => t.status === 'Pending' || t.status === 'Acknowledged').length;
+      const approved = tasks.filter(t => t.status === 'Approved').length;
+      const returned = tasks.filter(t => t.status === 'Returned').length;
+
+      document.getElementById('dash-total-tasks').innerText = total;
+      document.getElementById('dash-pending-tasks').innerText = pending;
+      document.getElementById('dash-approved-tasks').innerText = approved;
+      document.getElementById('dash-returned-tasks').innerText = returned;
     }
 
     function checkNewTaskPopups() {
@@ -836,44 +922,34 @@
       const tbody = document.getElementById('tasks-table-body');
       tbody.innerHTML = '';
 
-      let pending = 0, completed = 0, returned = 0;
-
       if(!dashboardCache.tasks || dashboardCache.tasks.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">No assigned tasks found.</td></tr>`;
-      } else {
-        dashboardCache.tasks.forEach(t => {
-          if(t.status === 'Pending') pending++;
-          if(t.status === 'Approved') completed++;
-          if(t.status === 'Returned') returned++;
-
-          const tr = document.createElement('tr');
-          tr.className = "hover:bg-slate-50 transition";
-          tr.innerHTML = `
-            <td class="p-4">
-              <strong class="text-slate-800">${t.title}</strong><br>
-              <span class="text-slate-400">${t.description || ''}</span>
-              ${t.feedback ? `<br><span class="text-rose-600 font-medium">Feedback: ${t.feedback}</span>` : ''}
-              ${t.submissionNote ? `<br><span class="text-emerald-700 font-medium">Staff Work Note: ${t.submissionNote}</span>` : ''}
-            </td>
-            <td class="p-4">${getPriorityBadge(t.priority)}</td>
-            <td class="p-4">From: ${t.assignedBy}<br>To: ${t.assignedTo}</td>
-            <td class="p-4">${t.due}</td>
-            <td class="p-4">${getStatusBadge(t.status)}</td>
-            <td class="p-4">
-              ${t.fileUrl ? `<a href="${t.fileUrl}" target="_blank" class="text-blue-600 hover:underline block mb-1"><i class="fa-solid fa-paperclip"></i> Task File</a>` : ''}
-              ${t.submissionFileUrl ? `<a href="${t.submissionFileUrl}" target="_blank" class="text-emerald-600 hover:underline block"><i class="fa-solid fa-file-circle-check"></i> Work Proof</a>` : ''}
-              ${!t.fileUrl && !t.submissionFileUrl ? 'None' : ''}
-            </td>
-            <td class="p-4">${getTaskActions(t)}</td>
-          `;
-          tbody.appendChild(tr);
-        });
+        return;
       }
 
-      document.getElementById('summary-total-tasks').innerText = dashboardCache.tasks ? dashboardCache.tasks.length : 0;
-      document.getElementById('summary-pending-tasks').innerText = pending;
-      document.getElementById('summary-completed-tasks').innerText = completed;
-      document.getElementById('summary-returned-tasks').innerText = returned;
+      dashboardCache.tasks.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="p-4">
+            <strong class="text-slate-800">${t.title}</strong><br>
+            <span class="text-slate-400">${t.description || ''}</span>
+            ${t.feedback ? `<br><span class="text-rose-600 font-medium">Feedback: ${t.feedback}</span>` : ''}
+            ${t.submissionNote ? `<br><span class="text-emerald-700 font-medium">Staff Work Note: ${t.submissionNote}</span>` : ''}
+          </td>
+          <td class="p-4">${getPriorityBadge(t.priority)}</td>
+          <td class="p-4">From: ${t.assignedBy}<br>To: ${t.assignedTo}</td>
+          <td class="p-4">${t.due}</td>
+          <td class="p-4">${getStatusBadge(t.status)}</td>
+          <td class="p-4">
+            ${t.fileUrl ? `<a href="${t.fileUrl}" target="_blank" class="text-blue-600 hover:underline block mb-1"><i class="fa-solid fa-paperclip"></i> Task File</a>` : ''}
+            ${t.submissionFileUrl ? `<a href="${t.submissionFileUrl}" target="_blank" class="text-emerald-600 hover:underline block"><i class="fa-solid fa-file-circle-check"></i> Work Proof</a>` : ''}
+            ${!t.fileUrl && !t.submissionFileUrl ? 'None' : ''}
+          </td>
+          <td class="p-4">${getTaskActions(t)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     function getStatusBadge(status) {
@@ -943,7 +1019,6 @@
       });
 
       alert(res.message);
-      triggerPushNotification("Task Submitted!", "Awaiting Principal/HOD Review.");
       closeSubmitModal();
       refreshDashboard(true);
     }
@@ -955,7 +1030,6 @@
       }
       const res = await apiCall('updateTaskStatus', { taskId: taskId, status: status, feedback: feedback });
       alert(res.message);
-      triggerPushNotification("Task Updated!", `Status updated to ${status}`);
       refreshDashboard(true);
     }
 
@@ -983,9 +1057,7 @@
 
       const res = await apiCall('assignTask', { taskData: taskData });
       alert(res.message);
-
       document.getElementById('assign-task-form').reset();
-
       refreshDashboard(true);
       switchTab(null, 'tasks');
     }
@@ -1016,41 +1088,37 @@
       refreshDashboard(true);
     }
 
-    // Dynamic Hierarchical Faculty Map Rendering
     function renderHierarchy() {
-      const principalNode = document.getElementById('tree-principal-node');
-      const hodNode = document.getElementById('tree-hod-node');
-      const staffNode = document.getElementById('tree-staff-node');
+      const principalContainer = document.getElementById('map-principal-container');
+      const hodContainer = document.getElementById('map-hod-container');
+      const staffContainer = document.getElementById('map-staff-container');
 
-      principalNode.innerHTML = '';
-      hodNode.innerHTML = '';
-      staffNode.innerHTML = '';
-
-      if(!dashboardCache.users || dashboardCache.users.length === 0) return;
+      principalContainer.innerHTML = '';
+      hodContainer.innerHTML = '';
+      staffContainer.innerHTML = '';
 
       dashboardCache.users.forEach(u => {
         const cleanPhoto = getCleanImageUrl(u.photo);
         const avatarHtml = cleanPhoto ? `<img src="${cleanPhoto}" class="w-full h-full object-cover">` : u.name.charAt(0);
-
+        
         const cardHtml = `
-          <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex items-center gap-3 shadow-sm hover:shadow-md transition">
-            <div class="w-12 h-12 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center overflow-hidden border-2 border-white shadow">
+          <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/80 flex items-center gap-3.5 shadow-sm hover:border-blue-400 transition">
+            <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-700 font-bold text-lg flex items-center justify-center overflow-hidden border-2 border-white shadow-md flex-shrink-0">
               ${avatarHtml}
             </div>
             <div>
               <h4 class="font-bold text-slate-800 text-xs">${u.name}</h4>
-              <p class="text-xs text-blue-600 font-semibold">${u.designation || u.role}</p>
-              <span class="text-[10px] text-slate-400">${u.department || 'Pharmacy'}</span>
+              <p class="text-[11px] text-blue-600 font-semibold mt-0.5">${u.designation} (${u.role})</p>
             </div>
           </div>
         `;
 
-        if(u.role === 'Principal') {
-          principalNode.innerHTML += cardHtml;
-        } else if(u.role === 'HOD') {
-          hodNode.innerHTML += cardHtml;
+        if (u.role === 'Principal') {
+          principalContainer.innerHTML += cardHtml;
+        } else if (u.role === 'HOD') {
+          hodContainer.innerHTML += cardHtml;
         } else {
-          staffNode.innerHTML += cardHtml;
+          staffContainer.innerHTML += cardHtml;
         }
       });
     }
@@ -1182,7 +1250,40 @@
       });
     }
 
-    function logout() {
+    // FIXED APPRECIATION OVERLAY LOGIC
+    function triggerLogoutAppreciation() {
+      const avatarBox = document.getElementById('appreciation-avatar');
+      const cleanPhoto = getCleanImageUrl(currentUser.photo_url);
+      if(cleanPhoto) {
+        avatarBox.innerHTML = `<img src="${cleanPhoto}" class="w-full h-full object-cover">`;
+      } else {
+        avatarBox.innerText = currentUser.name.charAt(0).toUpperCase();
+      }
+
+      const clockInVal = (userAttendanceStatusToday && userAttendanceStatusToday.clockIn) ? userAttendanceStatusToday.clockIn : "Marked";
+      const clockOutVal = (userAttendanceStatusToday && userAttendanceStatusToday.clockOut) ? userAttendanceStatusToday.clockOut : new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+
+      document.getElementById('appreciation-user-name').innerText = currentUser.name;
+      document.getElementById('appreciation-clockin').innerText = clockInVal;
+      document.getElementById('appreciation-clockout').innerText = clockOutVal;
+
+      document.getElementById('appreciation-screen').classList.remove('hidden');
+
+      let seconds = 60;
+      const countDisplay = document.getElementById('appreciation-countdown');
+      if (logoutCountdownTimer) clearInterval(logoutCountdownTimer);
+      
+      logoutCountdownTimer = setInterval(() => {
+        seconds--;
+        countDisplay.innerText = seconds;
+        if (seconds <= 0) {
+          finishLogoutNow();
+        }
+      }, 1000);
+    }
+
+    function finishLogoutNow() {
+      if (logoutCountdownTimer) clearInterval(logoutCountdownTimer);
       if (autoRefreshTimer) clearInterval(autoRefreshTimer);
       localStorage.removeItem('ges_erp_user');
       location.reload();

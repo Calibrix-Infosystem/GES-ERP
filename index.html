@@ -3,477 +3,619 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>G.E.S. College of Pharmacy - Staff ERP Portal</title>
+  <title>Pharmacy Staff ERP Portal - GES College of Pharmacy</title>
   
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Fonts Inter -->
+  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
-          colors: {
-            brand: {
-              50: '#f0f7ff',
-              100: '#e0effe',
-              500: '#2563eb',
-              600: '#1d4ed8',
-              800: '#1e40af',
-              900: '#0f172a',
-            }
-          }
-        }
-      }
-    }
-  </script>
   <style>
-    .glass-panel {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    .loader-spinner {
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      border-top: 3px solid #ffffff;
+      width: 36px;
+      height: 36px;
+      animation: spin 0.8s linear infinite;
     }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+<body class="h-screen overflow-hidden text-slate-800">
 
-  <!-- API URL CONSTANT -->
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbytmxmxCemmmkqDwCqRyG-CdpIVEEJmdliwhvosYR9JqY8uoo9CFXpL9oOs9L8Qez87gA/exec";
-  </script>
-
-  <!-- LOADING SPINNER MODAL -->
-  <div id="loading-overlay" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex flex-col items-center justify-center backdrop-blur-sm">
-    <div class="animate-spin rounded-full h-14 w-14 border-4 border-brand-500 border-t-transparent"></div>
-    <p id="loading-text" class="text-white mt-4 font-medium text-sm tracking-wide">Processing request, please wait...</p>
+  <!-- GLOBAL LOADER OVERLAY -->
+  <div id="global-loader" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
+    <div class="loader-spinner mb-3"></div>
+    <p id="loader-text" class="text-white font-medium text-xs tracking-wider uppercase">Please wait, updating record...</p>
   </div>
 
-  <!-- AUTHENTICATION CONTAINER (LOGIN / REGISTER) -->
-  <div id="auth-container" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-brand-900 to-slate-800">
-    
-    <!-- LOGIN BOX -->
-    <div id="login-box" class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 p-8">
-      <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-50 text-brand-600 mb-4 shadow-sm">
-          <i class="fa-solid fa-prescription-bottle-medical text-3xl"></i>
+  <!-- CENTER POPUP TASK MODAL ALERT -->
+  <div id="task-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border border-slate-100">
+      <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+      <h3 class="text-lg font-bold text-slate-900" id="modal-task-title">New Task Assigned!</h3>
+      <p class="text-xs text-slate-500 mt-2" id="modal-task-desc">You have received a new assignment from Principal/HOD.</p>
+      <div class="mt-6 flex items-center gap-2">
+        <button onclick="acknowledgeModalTask()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-md transition">
+          Acknowledge Now
+        </button>
+        <button onclick="closeTaskModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-semibold transition">
+          View Later
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT WORK MODAL FOR STAFF -->
+  <div id="submit-work-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
+      <h3 class="text-base font-bold text-slate-900 mb-2">Submit Task Work Details</h3>
+      <p class="text-xs text-slate-500 mb-4">Add your submission note and attach completed files for HOD/Principal review.</p>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Submission Work Note</label>
+          <textarea id="submission-note" rows="3" placeholder="Describe the work completed..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
         </div>
-        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Staff ERP Portal</h1>
-        <p class="text-xs font-semibold text-brand-600 uppercase tracking-widest mt-1">G.E.S. College of Pharmacy</p>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Attach Work File (PDF, PNG, JPG)</label>
+          <input type="file" id="submission-file" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+        </div>
+        <div class="flex items-center gap-2 pt-2">
+          <button onclick="confirmTaskSubmission()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-md transition">
+            Submit Work
+          </button>
+          <button onclick="closeSubmitModal()" class="py-2.5 px-4 bg-slate-200 text-slate-600 hover:bg-slate-300 rounded-xl text-xs font-semibold transition">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH CONTAINER -->
+  <div id="auth-container" class="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 p-4">
+    <!-- LOGIN BOX -->
+    <div id="login-box" class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 border border-slate-100 relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl mb-3 shadow-inner">
+          <i class="fa-solid fa-graduation-cap text-3xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900">GES Staff ERP Portal</h2>
+        <p class="text-sm text-slate-500 mt-1">College of Pharmacy Academic Portal</p>
       </div>
 
-      <form id="login-form" class="space-y-5" onsubmit="handleLogin(event)">
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
         <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">College Email Address</label>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Email Address</label>
           <div class="relative">
-            <i class="fa-solid fa-envelope absolute left-4 top-3.5 text-slate-400 text-sm"></i>
-            <input type="email" id="login-email" required placeholder="faculty@gespharmacy.edu" class="w-full pl-11 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+            <i class="fa-solid fa-envelope absolute left-4 top-3.5 text-slate-400"></i>
+            <input type="email" id="login-email" required class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="faculty@gespharmacy.edu">
           </div>
         </div>
-
         <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Password</label>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Password</label>
           <div class="relative">
-            <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400 text-sm"></i>
-            <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-11 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+            <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400"></i>
+            <input type="password" id="login-password" required class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="••••••••">
           </div>
         </div>
-
-        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-800 text-white font-semibold rounded-xl text-sm shadow-md shadow-brand-500/20 transition-all transform active:scale-[0.99]">
-          Sign In
+        <button type="submit" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-600/30 transition text-sm">
+          Sign In to Portal
         </button>
       </form>
-
-      <div class="mt-6 pt-6 border-t border-slate-100 text-center">
-        <p class="text-xs text-slate-500 mb-3">New staff member or faculty?</p>
-        <button onclick="toggleAuthScreen('register')" class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors">
-          Register Staff Account &rarr;
-        </button>
+      <div class="mt-6 text-center border-t border-slate-100 pt-6">
+        <p class="text-xs text-slate-500">New Faculty or Staff Member?</p>
+        <button onclick="toggleAuth('register')" class="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700 transition">Create Staff Account →</button>
       </div>
     </div>
 
     <!-- REGISTER BOX -->
-    <div id="register-box" class="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 p-8 hidden">
+    <div id="register-box" class="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-8 border border-slate-100 hidden relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-500 to-teal-600"></div>
       <div class="text-center mb-6">
-        <h2 class="text-xl font-bold text-slate-900">Staff Registration</h2>
-        <p class="text-xs text-slate-500 mt-1">Create your ERP account for G.E.S. Pharmacy Portal</p>
+        <h2 class="text-xl font-bold text-slate-900">Faculty & Staff Registration</h2>
+        <p class="text-xs text-slate-500 mt-1">Join GES College of Pharmacy Management System</p>
       </div>
 
-      <form id="register-form" class="space-y-4" onsubmit="handleRegister(event)">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Full Name</label>
-            <input type="text" id="reg-name" required placeholder="Dr. Rahul Sharma" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Full Name</label>
+            <input type="text" id="reg-name" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Dr. John Doe">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1.5">College Email</label>
-            <input type="email" id="reg-email" required placeholder="rahul@ges.edu" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Email Address</label>
+            <input type="email" id="reg-email" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="john@gespharmacy.edu">
           </div>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Password</label>
-            <input type="password" id="reg-password" required placeholder="••••••••" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+            <input type="password" id="reg-password" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Role Level</label>
-            <select id="reg-role" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 bg-white">
-              <option value="Faculty">Faculty Staff</option>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Institutional Role</label>
+            <select id="reg-role" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="Faculty">Faculty Member</option>
               <option value="HOD">Head of Department (HOD)</option>
               <option value="Principal">Principal</option>
             </select>
           </div>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Department</label>
-            <input type="text" id="reg-dept" required placeholder="Pharmaceutics" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Department</label>
+            <input type="text" id="reg-dept" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Pharmaceutics">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Designation</label>
-            <input type="text" id="reg-desig" required placeholder="Assistant Professor" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Designation</label>
+            <input type="text" id="reg-desig" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Assistant Professor">
           </div>
         </div>
-
-        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-800 text-white font-semibold rounded-xl text-sm shadow-md transition-all mt-2">
+        <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/30 transition text-sm mt-2">
           Complete Registration
         </button>
       </form>
-
       <div class="mt-4 text-center">
-        <button onclick="toggleAuthScreen('login')" class="text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors">
-          &larr; Back to Login
-        </button>
+        <button onclick="toggleAuth('login')" class="text-xs text-slate-500 hover:text-slate-700">← Back to Sign In</button>
       </div>
     </div>
-
   </div>
 
-  <!-- MAIN APP PORTAL CONTAINER -->
-  <div id="app-container" class="min-h-screen flex flex-col md:flex-row hidden">
+  <!-- MAIN DASHBOARD SYSTEM -->
+  <div id="app-container" class="h-screen w-full flex bg-slate-100 hidden relative">
     
+    <!-- MOBILE OVERLAY -->
+    <div id="mobile-sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 z-20 hidden md:hidden"></div>
+
     <!-- SIDEBAR NAVIGATION -->
-    <aside id="sidebar" class="w-full md:w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0">
-      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-lg">
-            <i class="fa-solid fa-graduation-cap"></i>
+    <aside id="app-sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between p-4 shadow-xl z-30 fixed md:relative h-full transition-transform duration-300 -translate-x-full md:translate-x-0">
+      <div>
+        <div class="flex items-center justify-between px-3 py-4 border-b border-slate-800 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <i class="fa-solid fa-prescription-bottle-medical text-xl"></i>
+            </div>
+            <div>
+              <h1 class="text-white font-bold text-base leading-tight">G.E.S. Pharmacy</h1>
+              <span class="text-xs text-slate-400">STAFF ERP PORTAL</span>
+            </div>
           </div>
-          <div>
-            <h2 class="text-sm font-bold text-white leading-tight">G.E.S. Pharmacy</h2>
-            <p class="text-[10px] text-slate-400 font-medium tracking-wide">STAFF ERP PORTAL</p>
-          </div>
+          <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
         </div>
-        <button class="md:hidden text-slate-400 hover:text-white" onclick="toggleMobileMenu()">
-          <i class="fa-solid fa-bars text-xl"></i>
-        </button>
+
+        <nav class="space-y-1.5">
+          <button onclick="switchTab(event, 'dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-blue-600 text-white">
+            <i class="fa-solid fa-chart-line w-5"></i> Dashboard
+          </button>
+          <button onclick="switchTab(event, 'tasks')" id="nav-tasks" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-tasks w-5"></i> Tasks Matrix
+          </button>
+          <button id="nav-assign" onclick="switchTab(event, 'assign-task')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white hidden">
+            <i class="fa-solid fa-plus-circle w-5"></i> Assign Task
+          </button>
+          <button onclick="switchTab(event, 'daily-work')" id="nav-daily-work" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-pen-to-square w-5"></i> Daily Work Log
+          </button>
+          <button onclick="switchTab(event, 'college-map')" id="nav-college-map" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-sitemap w-5"></i> Faculty Map
+          </button>
+          <button onclick="switchTab(event, 'profile')" id="nav-profile" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-user-gear w-5"></i> Profile Settings
+          </button>
+        </nav>
       </div>
 
-      <!-- NAV LINKS -->
-      <nav id="nav-menu" class="hidden md:flex flex-col p-4 space-y-1.5 flex-1">
-        <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all bg-brand-600 text-white">
-          <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
-        </a>
-        <a href="#" onclick="switchTab('tasks')" id="nav-tasks" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
-          <i class="fa-solid fa-list-check w-5"></i> Tasks Matrix
-        </a>
-        <a href="#" onclick="switchTab('assign')" id="nav-assign" class="nav-item hidden flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
-          <i class="fa-solid fa-paper-plane w-5"></i> Assign Task
-        </a>
-        <a href="#" onclick="switchTab('daily-work')" id="nav-daily-work" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
-          <i class="fa-solid fa-pen-to-square w-5"></i> Daily Work Log
-        </a>
-        <a href="#" onclick="switchTab('hierarchy')" id="nav-hierarchy" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
-          <i class="fa-solid fa-sitemap w-5"></i> Faculty Map
-        </a>
-        <a href="#" onclick="switchTab('profile')" id="nav-profile" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
-          <i class="fa-solid fa-id-card w-5"></i> Profile Settings
-        </a>
-      </nav>
-
-      <div class="p-4 border-t border-slate-800">
-        <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-all">
-          <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+      <div class="border-t border-slate-800 pt-4">
+        <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition">
+          <i class="fa-solid fa-right-from-bracket w-5"></i> Sign Out
         </button>
       </div>
     </aside>
 
-    <!-- MAIN BODY CONTENT -->
-    <main class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto custom-scrollbar">
-      
-      <!-- TOPBAR -->
-      <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-20">
-        <div>
-          <h1 id="view-title" class="text-lg font-bold text-slate-900">Dashboard</h1>
-          <p id="view-subtitle" class="text-xs text-slate-500">Welcome back to G.E.S. Pharmacy ERP System</p>
+    <!-- MAIN CONTENT VIEWPORT -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+      <!-- TOP NAVIGATION BAR -->
+      <header class="bg-white border-b border-slate-200 px-4 md:px-8 py-4 flex items-center justify-between shadow-sm z-10">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleMobileSidebar()" class="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <div>
+            <h2 id="page-title" class="text-lg md:text-xl font-bold text-slate-800">Dashboard</h2>
+            <p class="text-xs text-slate-500 hidden sm:block">Welcome back to G.E.S. Pharmacy ERP System</p>
+          </div>
         </div>
 
         <div class="flex items-center gap-4">
-          <div class="flex items-center gap-3 border-l border-slate-200 pl-4">
-            <img id="user-header-avatar" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" class="w-9 h-9 rounded-full object-cover border-2 border-brand-500 shadow-sm">
-            <div class="hidden sm:block text-left">
-              <div id="user-header-name" class="text-xs font-bold text-slate-900">Loading...</div>
-              <div id="user-header-role" class="text-[10px] text-slate-500 font-medium">Faculty Member</div>
+          <!-- Official Leave Alert Badge for Staff -->
+          <div id="official-leave-banner" class="hidden px-3 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-lg border border-amber-200">
+            <i class="fa-solid fa-circle-exclamation mr-1"></i> <span id="official-leave-text">Official On Leave</span>
+          </div>
+
+          <button onclick="refreshDashboard(true)" class="p-2.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-xl transition" title="Refresh Data">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+
+          <div class="flex items-center gap-3 border-l border-slate-200 pl-4 md:pl-6">
+            <div id="top-user-avatar" class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-sm overflow-hidden">
+              U
+            </div>
+            <div class="hidden sm:block">
+              <div id="user-display-name" class="font-semibold text-sm text-slate-800 leading-tight">User Name</div>
+              <div id="user-display-role" class="text-xs text-slate-500">Faculty</div>
             </div>
           </div>
         </div>
       </header>
 
-      <!-- VIEW PAGES BODY -->
-      <div class="p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
-        
-        <!-- ATTENDANCE ACTIONS BAR -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <!-- VIEWPORT BODY -->
+      <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+
+        <!-- QUICK ATTENDANCE ACTION BAR -->
+        <section class="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-200">
+          <div class="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-clock text-brand-600"></i> Attendance & On-Duty Status Tracker
-              </h2>
-              <p class="text-xs text-slate-500">Mark your daily presence or official status for administrative record</p>
+              <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-clock text-blue-600"></i> Attendance & On-Duty Status Tracker
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Mark your daily presence or official status for administrative record</p>
             </div>
-            <div class="flex flex-wrap gap-2">
-              <button onclick="handleAttendance('Clock In')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5">
-                <i class="fa-solid fa-right-to-bracket"></i> Clock In
+            <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+              <button onclick="markAttendance('Clock In')" class="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                <i class="fa-solid fa-right-to-bracket mr-1"></i> Clock In
               </button>
-              <button onclick="handleAttendance('Clock Out')" class="px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5">
-                <i class="fa-solid fa-right-from-bracket"></i> Clock Out
+              <button onclick="markAttendance('Clock Out')" class="flex-1 sm:flex-none px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i> Clock Out
               </button>
-              <button onclick="handleAttendance('On Duty')" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5">
-                <i class="fa-solid fa-briefcase"></i> On Duty (OD)
+              <button onclick="markAttendance('On Duty')" class="flex-1 sm:flex-none px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                <i class="fa-solid fa-briefcase mr-1"></i> On Duty (OD)
               </button>
-              <button onclick="handleAttendance('On Leave')" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5">
-                <i class="fa-solid fa-umbrella-beach"></i> Leave
+              <button onclick="markAttendance('On Leave')" class="flex-1 sm:flex-none px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                <i class="fa-solid fa-umbrella-beach mr-1"></i> Leave
               </button>
-              <button onclick="handleAttendance('Half Day')" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5">
-                <i class="fa-solid fa-hourglass-half"></i> Half Day
+              <button onclick="markAttendance('Half Day')" class="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                <i class="fa-solid fa-hourglass-half mr-1"></i> Half Day
               </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- PRINCIPAL / HOD LIVE ATTENDANCE METRICS BAR -->
+        <section id="admin-attendance-metrics" class="grid grid-cols-2 sm:grid-cols-4 gap-4 hidden">
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-user-check"></i></div>
+            <div>
+              <div class="text-xs text-slate-500">Clock In</div>
+              <div id="metric-clockin" class="text-lg font-bold text-slate-800">0</div>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-briefcase"></i></div>
+            <div>
+              <div class="text-xs text-slate-500">On Duty (OD)</div>
+              <div id="metric-onduty" class="text-lg font-bold text-slate-800">0</div>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div>
+              <div class="text-xs text-slate-500">Half Day</div>
+              <div id="metric-halfday" class="text-lg font-bold text-slate-800">0</div>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-umbrella-beach"></i></div>
+            <div>
+              <div class="text-xs text-slate-500">On Leave</div>
+              <div id="metric-leave" class="text-lg font-bold text-slate-800">0</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STAFF PERFORMANCE & TASK SUMMARY CARDS -->
+        <section id="staff-task-summary-cards" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div onclick="switchTab(null, 'tasks')" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-blue-400 transition">
+            <div class="text-xs text-slate-500">Total Tasks</div>
+            <div id="summary-total-tasks" class="text-lg font-bold text-slate-800">0</div>
+          </div>
+          <div onclick="switchTab(null, 'tasks')" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-amber-400 transition">
+            <div class="text-xs text-amber-600 font-semibold">Pending Tasks</div>
+            <div id="summary-pending-tasks" class="text-lg font-bold text-amber-600">0</div>
+          </div>
+          <div onclick="switchTab(null, 'tasks')" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-emerald-400 transition">
+            <div class="text-xs text-emerald-600 font-semibold">Completed</div>
+            <div id="summary-completed-tasks" class="text-lg font-bold text-emerald-600">0</div>
+          </div>
+          <div onclick="switchTab(null, 'tasks')" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-rose-400 transition">
+            <div class="text-xs text-rose-600 font-semibold">Returned</div>
+            <div id="summary-returned-tasks" class="text-lg font-bold text-rose-600">0</div>
+          </div>
+        </section>
+
+        <!-- 1. DASHBOARD TAB -->
+        <div id="tab-dashboard" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+              <div>
+                <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
+                  <i class="fa-solid fa-bullhorn text-blue-600"></i> Principal & HOD Broadcast Announcements
+                </h3>
+                <div id="announcement-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                  <p class="text-xs text-slate-400 italic text-center py-4">No broadcasts posted.</p>
+                </div>
+              </div>
+
+              <div id="announcement-post-box" class="mt-6 pt-4 border-t border-slate-100 space-y-3 hidden">
+                <h4 class="text-xs font-bold text-slate-700 uppercase">Publish Announcement</h4>
+                <input type="text" id="ann-title" placeholder="Announcement Title" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <textarea id="ann-body" rows="2" placeholder="Announcement content..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                <button onclick="postAnnouncement()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition">
+                  Post to All Staff
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Recent Staff Activity Logs
+              </h3>
+              <div id="daily-work-summary" class="space-y-3 max-h-80 overflow-y-auto pr-2">
+                <p class="text-xs text-slate-400 italic text-center py-4">No recent work logs.</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- 1. DASHBOARD VIEW -->
-        <section id="view-dashboard" class="space-y-6">
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- ANNOUNCEMENTS BOARD -->
-            <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col">
-              <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <i class="fa-solid fa-bullhorn text-brand-600"></i> Principal & HOD Broadcast Announcements
-                </h3>
-              </div>
-
-              <!-- POST ANNOUNCEMENT FORM (ADMINS ONLY) -->
-              <div id="announcement-post-panel" class="hidden mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200">
-                <p class="text-xs font-semibold text-slate-700 mb-2">Publish New Announcement (All Staff)</p>
-                <input type="text" id="ann-input-title" placeholder="Announcement Title..." class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 mb-2 focus:outline-none focus:ring-1 focus:ring-brand-500">
-                <textarea id="ann-input-body" rows="2" placeholder="Announcement Details..." class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 mb-2 focus:outline-none focus:ring-1 focus:ring-brand-500"></textarea>
-                <button onclick="submitAnnouncement()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow-sm">
-                  Publish Broadcast
-                </button>
-              </div>
-
-              <!-- ANNOUNCEMENT FEED -->
-              <div id="announcements-feed" class="space-y-3 custom-scrollbar overflow-y-auto max-h-80 pr-1">
-                <p class="text-xs text-slate-400 italic text-center py-6">No broadcasts available.</p>
-              </div>
+        <!-- 2. TASKS MATRIX TAB -->
+        <div id="tab-tasks" class="hidden">
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <h3 class="font-bold text-slate-800 text-sm">Task Assignment Matrix</h3>
             </div>
-
-            <!-- DAILY WORK LOGS FEED -->
-            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col">
-              <div class="pb-4 mb-4 border-b border-slate-100">
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <i class="fa-solid fa-clock-rotate-left text-brand-600"></i> Recent Staff Activity Logs
-                </h3>
-              </div>
-              <div id="daily-work-feed" class="space-y-3 custom-scrollbar overflow-y-auto max-h-80 pr-1">
-                <p class="text-xs text-slate-400 italic text-center py-6">No recent logs recorded.</p>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        <!-- 2. TASKS MATRIX VIEW -->
-        <section id="view-tasks" class="hidden">
-          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100">
-              <h3 class="text-sm font-bold text-slate-900">Task Management Matrix</h3>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-medium text-slate-500">Total:</span>
-                <span id="task-count-badge" class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-bold">0</span>
-              </div>
-            </div>
-
             <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
+              <table class="w-full text-left border-collapse min-w-[700px]">
                 <thead>
-                  <tr class="bg-slate-50 border-y border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-bold">
-                    <th class="p-3">Task Details</th>
-                    <th class="p-3">Priority</th>
-                    <th class="p-3">Assigned By / To</th>
-                    <th class="p-3">Due Date</th>
-                    <th class="p-3">Status</th>
-                    <th class="p-3">Attachment</th>
-                    <th class="p-3 text-right">Action Controls</th>
+                  <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider font-semibold">
+                    <th class="p-4">Task Details</th>
+                    <th class="p-4">Priority</th>
+                    <th class="p-4">Assigned By / To</th>
+                    <th class="p-4">Due Date</th>
+                    <th class="p-4">Status</th>
+                    <th class="p-4">Task Attachments</th>
+                    <th class="p-4">Action</th>
                   </tr>
                 </thead>
-                <tbody id="tasks-table-body" class="divide-y divide-slate-100 text-xs">
-                  <!-- Dynamic Row Injections -->
+                <tbody id="tasks-table-body" class="divide-y divide-slate-200 text-xs text-slate-700">
+                  <tr><td colspan="7" class="p-4 text-center text-slate-400">Loading task records...</td></tr>
                 </tbody>
               </table>
             </div>
           </div>
-        </section>
+        </div>
 
-        <!-- 3. ASSIGN TASK VIEW -->
-        <section id="view-assign" class="hidden">
-          <div class="max-w-2xl mx-auto bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 md:p-8">
-            <div class="border-b border-slate-100 pb-4 mb-6">
-              <h3 class="text-base font-bold text-slate-900">Assign Work Task / Directive</h3>
-              <p class="text-xs text-slate-500">Principal / HOD Portal to dispatch responsibilities to staff</p>
-            </div>
-
-            <form id="assign-task-form" class="space-y-4" onsubmit="handleAssignTask(event)">
+        <!-- 3. ASSIGN TASK TAB -->
+        <div id="tab-assign-task" class="hidden">
+          <div class="max-w-xl bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+            <h3 class="font-bold text-slate-800 text-base">Assign Task to Staff</h3>
+            
+            <form id="assign-task-form" onsubmit="handleAssignTask(event)" class="space-y-4">
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Task Title</label>
-                <input type="text" id="task-assign-title" required placeholder="Prepare NAAC Module Documentation" class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Task Title</label>
+                <input type="text" id="task-title" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Prepare Pharmaceutics Syllabus">
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-xs font-semibold text-slate-700 mb-1.5">Assign To Staff Member</label>
-                  <select id="task-assign-target" required class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
-                    <!-- Populated dynamically -->
-                  </select>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Assign To Staff</label>
+                  <select id="task-assign-to" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
                 </div>
                 <div>
-                  <label class="block text-xs font-semibold text-slate-700 mb-1.5">Priority Urgency Dropdown</label>
-                  <select id="task-assign-priority" required class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
-                    <option value="Urgent">Urgent (तात्काळ / High Priority)</option>
-                    <option value="Medium" selected>Medium (सामान्य / Normal Timeline)</option>
-                    <option value="Low">Low (कमी प्राधान्य / Flexible)</option>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Priority</label>
+                  <select id="task-priority" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="Urgent">Urgent</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Completion Due Date</label>
-                <input type="date" id="task-assign-due" required class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Due Date</label>
+                <input type="date" id="task-due" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
               </div>
 
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Task Instructions / Description</label>
-                <textarea id="task-assign-desc" rows="3" placeholder="Specify instructions, syllabus details, or submission goals..." class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"></textarea>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Task Description / Instructions</label>
+                <textarea id="task-desc" rows="3" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Add specific task instructions..."></textarea>
               </div>
 
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Attach Reference Document (PDF, Image, PNG)</label>
-                <input type="file" id="task-assign-file" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Attachment (PDF, PNG, JPG)</label>
+                <input type="file" id="task-file" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
               </div>
 
-              <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-xs shadow-md transition-all mt-2">
-                Dispatch Task Directive
+              <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-md transition">
+                Assign Task Now
               </button>
             </form>
           </div>
-        </section>
+        </div>
 
-        <!-- 4. DAILY WORK LOG VIEW -->
-        <section id="view-daily-work" class="hidden">
-          <div class="max-w-2xl mx-auto bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 md:p-8">
-            <div class="border-b border-slate-100 pb-4 mb-6">
-              <h3 class="text-base font-bold text-slate-900">Faculty Daily Progress Log</h3>
-              <p class="text-xs text-slate-500">Record tasks and academic work performed today for HOD/Principal review</p>
+        <!-- 4. DAILY WORK LOG TAB -->
+        <div id="tab-daily-work" class="hidden">
+          <div class="max-w-xl bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+            <h3 class="font-bold text-slate-800 text-base">Submit Daily Work Progress</h3>
+            <p class="text-xs text-slate-500">Log work done today for HOD and Principal review.</p>
+            
+            <textarea id="daily-work-text" rows="5" placeholder="Detail tasks completed today..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+
+            <button onclick="submitDailyWork()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-md transition">
+              Submit Daily Work Report
+            </button>
+          </div>
+        </div>
+
+        <!-- 5. COLLEGE MAP TAB (PROPER HIERARCHY TREE) -->
+        <div id="tab-college-map" class="hidden">
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-8">
+            <h3 class="font-bold text-slate-800 text-base border-b border-slate-100 pb-3">GES College Hierarchy Map</h3>
+            
+            <!-- PRINCIPAL NODE -->
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">College Principal</h4>
+              <div id="tree-principal-node" class="flex justify-center">
+                <p class="text-xs text-slate-400">Loading Principal record...</p>
+              </div>
             </div>
 
-            <form onsubmit="handleDailyWorkLog(event)" class="space-y-4">
-              <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Work Details (आज केलेले काम / Practical / Lectures Completed)</label>
-                <textarea id="daily-work-input" rows="5" required placeholder="• Conducted B.Pharm 3rd Sem Practical Lab
-• Evaluated 25 Pharmacology assignments
-• Attended Departmental NAAC Meeting" class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"></textarea>
-              </div>
+            <div class="w-full border-t border-slate-200"></div>
 
-              <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-xs shadow-md transition-all">
-                Submit Today's Log
+            <!-- HOD NODE -->
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">Head of Departments (HOD)</h4>
+              <div id="tree-hod-node" class="grid grid-cols-1 sm:grid-cols-2 gap-4 justify-center">
+                <p class="text-xs text-slate-400 text-center col-span-2">Loading HOD records...</p>
+              </div>
+            </div>
+
+            <div class="w-full border-t border-slate-200"></div>
+
+            <!-- STAFF NODE -->
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">Faculty & Teaching Staff</h4>
+              <div id="tree-staff-node" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <p class="text-xs text-slate-400 text-center col-span-3">Loading Faculty records...</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 6. PROFILE TAB -->
+        <div id="tab-profile" class="hidden">
+          <div class="max-w-xl bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="flex items-center justify-between pb-6 border-b border-slate-100">
+              <h3 class="font-bold text-slate-800 text-base">User Profile Settings</h3>
+              <button onclick="toggleEditProfile()" id="edit-profile-btn" class="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-semibold transition">
+                <i class="fa-solid fa-pen-to-square mr-1"></i> Edit Profile
               </button>
+            </div>
+
+            <div id="profile-card-view" class="pt-6 text-center space-y-4">
+              <div class="relative inline-block">
+                <div id="profile-avatar-display" class="w-24 h-24 rounded-full bg-blue-600 text-white font-bold text-3xl flex items-center justify-center mx-auto shadow-md overflow-hidden border-2 border-white">
+                  U
+                </div>
+              </div>
+              <div>
+                <h4 id="profile-name-text" class="text-lg font-bold text-slate-900">User Name</h4>
+                <p id="profile-role-text" class="text-xs font-semibold text-blue-600">Faculty</p>
+                <p id="profile-dept-text" class="text-xs text-slate-500">Pharmaceutics</p>
+              </div>
+              <div class="bg-slate-50 p-4 rounded-xl text-left text-xs space-y-2 border border-slate-100 mt-4">
+                <div><span class="text-slate-400">Email Address:</span> <span id="profile-email-text" class="font-medium text-slate-700">email@ges.edu</span></div>
+                <div><span class="text-slate-400">Designation:</span> <span id="profile-desig-text" class="font-medium text-slate-700">Assistant Professor</span></div>
+              </div>
+            </div>
+
+            <form id="profile-edit-form" onsubmit="handleUpdateProfile(event)" class="pt-6 space-y-4 hidden">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Update Profile Photo</label>
+                <input type="file" id="edit-photo-file" accept="image/*" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Full Name</label>
+                <input type="text" id="edit-name" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Department</label>
+                  <input type="text" id="edit-dept" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Designation</label>
+                  <input type="text" id="edit-desig" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+              </div>
+              <div class="flex items-center gap-3 pt-2">
+                <button type="submit" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-md transition">
+                  Save Changes
+                </button>
+                <button type="button" onclick="toggleEditProfile()" class="py-2.5 px-4 bg-slate-200 text-slate-600 hover:bg-slate-300 text-xs font-semibold rounded-xl transition">
+                  Cancel
+                </button>
+              </div>
             </form>
           </div>
-        </section>
-
-        <!-- 5. HIERARCHY / FACULTY MAP VIEW -->
-        <section id="view-hierarchy" class="hidden">
-          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-            <div class="border-b border-slate-100 pb-4 mb-6">
-              <h3 class="text-base font-bold text-slate-900">Institutional Faculty Hierarchy</h3>
-              <p class="text-xs text-slate-500">Directory of G.E.S. College of Pharmacy administration and faculty staff</p>
-            </div>
-
-            <div id="hierarchy-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <!-- Dynamically render user cards -->
-            </div>
-          </div>
-        </section>
-
-        <!-- 6. PROFILE SETTINGS VIEW -->
-        <section id="view-profile" class="hidden">
-          <div class="max-w-md mx-auto bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 text-center">
-            <div class="relative inline-block mb-4">
-              <img id="profile-card-avatar" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" class="w-24 h-24 rounded-full object-cover border-4 border-slate-100 shadow-md mx-auto">
-            </div>
-
-            <h3 id="profile-card-name" class="text-base font-bold text-slate-900">User Profile Name</h3>
-            <p id="profile-card-role" class="text-xs font-semibold text-brand-600 mt-0.5">Faculty / Role</p>
-            <p id="profile-card-dept" class="text-xs text-slate-500 mt-0.5">Department Name</p>
-
-            <div class="mt-6 pt-6 border-t border-slate-100 text-left space-y-3 text-xs">
-              <div>
-                <span class="font-semibold text-slate-500 block">Email Address:</span>
-                <span id="profile-card-email" class="text-slate-800 font-medium">-</span>
-              </div>
-              <div>
-                <span class="font-semibold text-slate-500 block">Designation:</span>
-                <span id="profile-card-desig" class="text-slate-800 font-medium">-</span>
-              </div>
-            </div>
-          </div>
-        </section>
+        </div>
 
       </div>
     </main>
   </div>
 
-  <!-- APPLICATION LOGIC & API INTEGRATION SCRIPT -->
   <script>
-    // State Variables
+    const API_URL = "https://script.google.com/macros/s/AKfycbypgCFn_UonywRr3xE9OeEx6wkeO7jSB_dKFqg3l8z4onvEb05ol84lpGihWoxsEk3law/exec";
+
     let currentUser = null;
-    let appData = { users: [], tasks: [], dailyWork: [], announcements: [] };
+    let dashboardCache = null;
+    let activeTaskForSubmission = null;
+    let modalTaskForAck = null;
+    let trackedTaskIds = new Set();
+    let autoRefreshTimer = null;
 
-    // --- UTILITY FUNCTIONS ---
-    function showLoading(msg = "Communicating with server...") {
-      document.getElementById('loading-text').innerText = msg;
-      document.getElementById('loading-overlay').classList.remove('hidden');
+    // Check Local Storage Auto Login
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedUser = localStorage.getItem('ges_erp_user');
+      if(savedUser) {
+        try {
+          currentUser = JSON.parse(savedUser);
+          initApp();
+        } catch(e) {
+          localStorage.removeItem('ges_erp_user');
+        }
+      }
+    });
+
+    function showLoader(text = "Please wait, updating record...") {
+      document.getElementById('loader-text').innerText = text;
+      document.getElementById('global-loader').classList.remove('hidden');
+    }
+    function hideLoader() {
+      document.getElementById('global-loader').classList.add('hidden');
     }
 
-    function hideLoading() {
-      document.getElementById('loading-overlay').classList.add('hidden');
+    async function apiCall(action, payload = {}, silent = false) {
+      if(!silent) showLoader("Please wait, updating record...");
+      try {
+        const bodyData = JSON.stringify({ action: action, ...payload });
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: bodyData
+        });
+        const result = await response.json();
+        if(!silent) hideLoader();
+        return result;
+      } catch (err) {
+        if(!silent) hideLoader();
+        return { status: "error", message: err.message };
+      }
     }
 
-    function toggleAuthScreen(screen) {
-      if(screen === 'register') {
+    function toggleAuth(type) {
+      if(type === 'register') {
         document.getElementById('login-box').classList.add('hidden');
         document.getElementById('register-box').classList.remove('hidden');
       } else {
@@ -482,402 +624,568 @@
       }
     }
 
-    function toggleMobileMenu() {
-      const nav = document.getElementById('nav-menu');
-      nav.classList.toggle('hidden');
-    }
-
-    // --- API HANDLER (FETCH POLLING) ---
-    async function apiRequest(action, payload = {}) {
-      showLoading();
-      try {
-        const bodyData = JSON.stringify({ action, ...payload });
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: bodyData
-        });
-        const result = await response.json();
-        hideLoading();
-        return result;
-      } catch (err) {
-        hideLoading();
-        console.error("API Error:", err);
-        alert("Server request failed. Please check network or script deployment permissions.");
-        return { status: "error", message: err.toString() };
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('app-sidebar');
+      const overlay = document.getElementById('mobile-sidebar-overlay');
+      if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
       }
     }
 
-    // --- AUTHENTICATION ---
+    function getCleanImageUrl(url) {
+      if (!url) return "";
+      if (url.includes("drive.google.com")) {
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w500`;
+        }
+      }
+      return url;
+    }
+
     async function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value.trim();
+      const email = document.getElementById('login-email').value;
+      const pass = document.getElementById('login-password').value;
 
-      const res = await apiRequest("loginUser", { email, password });
+      const res = await apiCall('loginUser', { email: email, password: pass });
       if(res.status === 'success') {
         currentUser = res.data;
-        bootstrapApp();
+        localStorage.setItem('ges_erp_user', JSON.stringify(currentUser));
+        requestNotificationPermission();
+        initApp();
       } else {
-        alert(res.message || "Invalid Email/Password");
+        alert(res.message);
+      }
+    }
+
+    function requestNotificationPermission() {
+      if ("Notification" in window) {
+        Notification.requestPermission();
+      }
+    }
+
+    function triggerPushNotification(title, body) {
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, { body: body, icon: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' });
       }
     }
 
     async function handleRegister(e) {
       e.preventDefault();
       const userData = {
-        name: document.getElementById('reg-name').value.trim(),
-        email: document.getElementById('reg-email').value.trim(),
-        password: document.getElementById('reg-password').value.trim(),
+        name: document.getElementById('reg-name').value,
+        email: document.getElementById('reg-email').value,
+        password: document.getElementById('reg-password').value,
         role: document.getElementById('reg-role').value,
-        department: document.getElementById('reg-dept').value.trim(),
-        designation: document.getElementById('reg-desig').value.trim()
+        department: document.getElementById('reg-dept').value,
+        designation: document.getElementById('reg-desig').value,
       };
 
-      const res = await apiRequest("registerUser", { userData });
+      const res = await apiCall('registerUser', { userData: userData });
       alert(res.message);
-      if(res.status === 'success') {
-        toggleAuthScreen('login');
-      }
+      if(res.status === 'success') toggleAuth('login');
     }
 
-    function handleLogout() {
-      currentUser = null;
-      document.getElementById('app-container').classList.add('hidden');
-      document.getElementById('auth-container').classList.remove('hidden');
-    }
-
-    // --- INITIALIZE APPLICATION ---
-    async function bootstrapApp() {
+    async function initApp() {
       document.getElementById('auth-container').classList.add('hidden');
       document.getElementById('app-container').classList.remove('hidden');
 
-      // Setup Header Details
-      document.getElementById('user-header-name').innerText = currentUser.name;
-      document.getElementById('user-header-role').innerText = `${currentUser.role} • ${currentUser.department}`;
-      if(currentUser.photo_url) {
-        document.getElementById('user-header-avatar').src = currentUser.photo_url;
-      } else {
-        document.getElementById('user-header-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=0D8ABC&color=fff`;
-      }
+      updateUserDisplayHeaders();
 
-      // Configure Admin View Privileges
       if(currentUser.role === 'Principal' || currentUser.role === 'HOD') {
         document.getElementById('nav-assign').classList.remove('hidden');
-        document.getElementById('announcement-post-panel').classList.remove('hidden');
+        document.getElementById('announcement-post-box').classList.remove('hidden');
+        document.getElementById('admin-attendance-metrics').classList.remove('hidden');
       }
 
-      // Sync Profile Tab Data
-      document.getElementById('profile-card-name').innerText = currentUser.name;
-      document.getElementById('profile-card-role').innerText = currentUser.role;
-      document.getElementById('profile-card-dept').innerText = currentUser.department;
-      document.getElementById('profile-card-email').innerText = currentUser.email;
-      document.getElementById('profile-card-desig').innerText = currentUser.designation;
-      document.getElementById('profile-card-avatar').src = document.getElementById('user-header-avatar').src;
+      renderProfile();
+      await refreshDashboard();
 
-      await syncDashboard();
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      autoRefreshTimer = setInterval(() => {
+        refreshDashboard(false);
+      }, 30000);
     }
 
-    // --- SYNC DATA FROM SERVER ---
-    async function syncDashboard() {
-      const res = await apiRequest("getDashboardData", { 
-        userEmail: currentUser.email, 
-        role: currentUser.role 
-      });
+    function updateUserDisplayHeaders() {
+      document.getElementById('user-display-name').innerText = currentUser.name;
+      document.getElementById('user-display-role').innerText = `${currentUser.role} • ${currentUser.department}`;
+      
+      const topAvatar = document.getElementById('top-user-avatar');
+      const cleanPhoto = getCleanImageUrl(currentUser.photo_url);
+      if(cleanPhoto) {
+        topAvatar.innerHTML = `<img src="${cleanPhoto}" class="w-full h-full object-cover">`;
+      } else {
+        topAvatar.innerText = currentUser.name.charAt(0).toUpperCase();
+      }
+    }
 
+    async function refreshDashboard(showSpinner = false) {
+      const res = await apiCall('getDashboardData', { userEmail: currentUser.email, role: currentUser.role }, !showSpinner);
       if(res.status === 'success') {
-        appData = res.data;
-        renderTasksTable();
-        renderAnnouncementsFeed();
-        renderDailyWorkFeed();
-        renderHierarchyMap();
-        populateAssignUsersList();
+        dashboardCache = res.data;
+        checkNewTaskPopups();
+        renderTasks();
+        renderAnnouncements();
+        renderDailyWork();
+        renderHierarchy();
+        renderAttendanceMetrics();
+        renderOfficialLeaveBanner();
+        populateAssignDropdown();
       }
     }
 
-    // --- RENDER TASKS TABLE ---
-    function renderTasksTable() {
+    function renderAttendanceMetrics() {
+      if(!dashboardCache.attendanceSummary) return;
+      const s = dashboardCache.attendanceSummary;
+      document.getElementById('metric-clockin').innerText = s.clockIn;
+      document.getElementById('metric-onduty').innerText = s.onDuty;
+      document.getElementById('metric-halfday').innerText = s.halfDay;
+      document.getElementById('metric-leave').innerText = s.leave;
+    }
+
+    function renderOfficialLeaveBanner() {
+      if(!dashboardCache.attendanceSummary) return;
+      const banner = document.getElementById('official-leave-banner');
+      const text = document.getElementById('official-leave-text');
+      const s = dashboardCache.attendanceSummary;
+
+      if(s.principalLeave && s.hodLeave) {
+        text.innerText = "Principal Sir & HOD: On Leave Today";
+        banner.classList.remove('hidden');
+      } else if(s.principalLeave) {
+        text.innerText = "Principal Sir: On Leave Today";
+        banner.classList.remove('hidden');
+      } else if(s.hodLeave) {
+        text.innerText = "HOD: On Leave Today";
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function checkNewTaskPopups() {
+      if (!dashboardCache.tasks) return;
+
+      dashboardCache.tasks.forEach(t => {
+        if (t.assignedTo === currentUser.email && t.status === 'Pending' && !trackedTaskIds.has(t.taskId)) {
+          trackedTaskIds.add(t.taskId);
+          
+          modalTaskForAck = t.taskId;
+          document.getElementById('modal-task-title').innerText = t.title;
+          document.getElementById('modal-task-desc').innerText = `Priority: ${t.priority} | Due Date: ${t.due}\n${t.description || ''}`;
+          document.getElementById('task-modal').classList.remove('hidden');
+
+          triggerPushNotification("New Task Assigned!", `${t.title} assigned to you.`);
+        }
+      });
+    }
+
+    async function acknowledgeModalTask() {
+      if (modalTaskForAck) {
+        await updateTask(modalTaskForAck, 'Acknowledged');
+        closeTaskModal();
+      }
+    }
+
+    function closeTaskModal() {
+      document.getElementById('task-modal').classList.add('hidden');
+      modalTaskForAck = null;
+    }
+
+    function switchTab(e, tabId) {
+      if(e) e.preventDefault();
+      
+      document.querySelectorAll('#app-container nav button').forEach(el => {
+        el.classList.remove('bg-blue-600', 'text-white');
+        el.classList.add('hover:bg-slate-800', 'hover:text-white');
+      });
+      document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+
+      const activeBtn = document.getElementById(`nav-${tabId}`);
+      if(activeBtn) {
+        activeBtn.classList.remove('hover:bg-slate-800', 'hover:text-white');
+        activeBtn.classList.add('bg-blue-600', 'text-white');
+      }
+
+      const activeTab = document.getElementById(`tab-${tabId}`);
+      if(activeTab) {
+        activeTab.classList.remove('hidden');
+      }
+
+      document.getElementById('app-sidebar').classList.add('-translate-x-full');
+      document.getElementById('mobile-sidebar-overlay').classList.add('hidden');
+      
+      const titleMap = {
+        'dashboard': 'Dashboard',
+        'tasks': 'Tasks Matrix',
+        'assign-task': 'Assign Task',
+        'daily-work': 'Daily Work Log',
+        'college-map': 'Faculty Map',
+        'profile': 'Profile Settings'
+      };
+      document.getElementById('page-title').innerText = titleMap[tabId] || 'Dashboard';
+    }
+
+    function renderTasks() {
       const tbody = document.getElementById('tasks-table-body');
       tbody.innerHTML = '';
-      
-      const tasks = appData.tasks || [];
-      document.getElementById('task-count-badge').innerText = tasks.length;
 
-      if(tasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400 italic">No tasks assigned or active.</td></tr>`;
-        return;
+      let pending = 0, completed = 0, returned = 0;
+
+      if(!dashboardCache.tasks || dashboardCache.tasks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">No assigned tasks found.</td></tr>`;
+      } else {
+        dashboardCache.tasks.forEach(t => {
+          if(t.status === 'Pending') pending++;
+          if(t.status === 'Approved') completed++;
+          if(t.status === 'Returned') returned++;
+
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50 transition";
+          tr.innerHTML = `
+            <td class="p-4">
+              <strong class="text-slate-800">${t.title}</strong><br>
+              <span class="text-slate-400">${t.description || ''}</span>
+              ${t.feedback ? `<br><span class="text-rose-600 font-medium">Feedback: ${t.feedback}</span>` : ''}
+              ${t.submissionNote ? `<br><span class="text-emerald-700 font-medium">Staff Work Note: ${t.submissionNote}</span>` : ''}
+            </td>
+            <td class="p-4">${getPriorityBadge(t.priority)}</td>
+            <td class="p-4">From: ${t.assignedBy}<br>To: ${t.assignedTo}</td>
+            <td class="p-4">${t.due}</td>
+            <td class="p-4">${getStatusBadge(t.status)}</td>
+            <td class="p-4">
+              ${t.fileUrl ? `<a href="${t.fileUrl}" target="_blank" class="text-blue-600 hover:underline block mb-1"><i class="fa-solid fa-paperclip"></i> Task File</a>` : ''}
+              ${t.submissionFileUrl ? `<a href="${t.submissionFileUrl}" target="_blank" class="text-emerald-600 hover:underline block"><i class="fa-solid fa-file-circle-check"></i> Work Proof</a>` : ''}
+              ${!t.fileUrl && !t.submissionFileUrl ? 'None' : ''}
+            </td>
+            <td class="p-4">${getTaskActions(t)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
       }
 
-      tasks.forEach(t => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition-colors";
-
-        // Priority Badge Theme
-        let priorityBadgeClass = "bg-slate-100 text-slate-700";
-        if(t.priority === 'Urgent') priorityBadgeClass = "bg-rose-100 text-rose-700 border border-rose-200";
-        else if(t.priority === 'Medium') priorityBadgeClass = "bg-amber-100 text-amber-700 border border-amber-200";
-        else if(t.priority === 'Low') priorityBadgeClass = "bg-emerald-100 text-emerald-700 border border-emerald-200";
-
-        // Status Badge Theme
-        let statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">${t.status}</span>`;
-        if(t.status === 'Approved') statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">Approved</span>`;
-        if(t.status === 'Returned') statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-700">Returned</span>`;
-        if(t.status === 'Submitted') statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700">Under Review</span>`;
-
-        tr.innerHTML = `
-          <td class="p-3">
-            <div class="font-bold text-slate-900">${t.title}</div>
-            <div class="text-[11px] text-slate-500 max-w-xs truncate">${t.description || '-'}</div>
-            ${t.feedback ? `<div class="text-[10px] text-rose-600 mt-1 italic"><strong>Feedback:</strong> ${t.feedback}</div>` : ''}
-          </td>
-          <td class="p-3">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${priorityBadgeClass}">${t.priority}</span>
-          </td>
-          <td class="p-3 text-[11px]">
-            <div><span class="text-slate-400">By:</span> ${t.assignedBy}</div>
-            <div><span class="text-slate-400">To:</span> ${t.assignedTo}</div>
-          </td>
-          <td class="p-3 font-medium text-slate-700">${t.due || '-'}</td>
-          <td class="p-3">${statusBadge}</td>
-          <td class="p-3">
-            ${t.fileUrl ? `<a href="${t.fileUrl}" target="_blank" class="text-brand-600 font-semibold hover:underline inline-flex items-center gap-1"><i class="fa-solid fa-paperclip"></i> File</a>` : '<span class="text-slate-400">-</span>'}
-          </td>
-          <td class="p-3 text-right">
-            ${renderTaskControls(t)}
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+      document.getElementById('summary-total-tasks').innerText = dashboardCache.tasks ? dashboardCache.tasks.length : 0;
+      document.getElementById('summary-pending-tasks').innerText = pending;
+      document.getElementById('summary-completed-tasks').innerText = completed;
+      document.getElementById('summary-returned-tasks').innerText = returned;
     }
 
-    function renderTaskControls(t) {
+    function getStatusBadge(status) {
+      if(status === 'Pending') return `<span class="px-2 py-1 bg-amber-100 text-amber-700 rounded font-semibold text-xs">Pending</span>`;
+      if(status === 'Acknowledged') return `<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded font-semibold text-xs">Acknowledged</span>`;
+      if(status === 'Submitted') return `<span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded font-semibold text-xs">Submitted</span>`;
+      if(status === 'Approved') return `<span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded font-semibold text-xs">Approved</span>`;
+      if(status === 'Returned') return `<span class="px-2 py-1 bg-rose-100 text-rose-700 rounded font-semibold text-xs">Returned</span>`;
+      return status;
+    }
+
+    function getPriorityBadge(priority) {
+      if(priority === 'Urgent') return `<span class="px-2 py-1 bg-rose-100 text-rose-600 rounded font-semibold text-xs">Urgent</span>`;
+      if(priority === 'Medium') return `<span class="px-2 py-1 bg-amber-100 text-amber-600 rounded font-semibold text-xs">Medium</span>`;
+      return `<span class="px-2 py-1 bg-emerald-100 text-emerald-600 rounded font-semibold text-xs">Low</span>`;
+    }
+
+    function getTaskActions(t) {
       if(t.assignedTo === currentUser.email) {
         if(t.status === 'Pending') {
-          return `<button onclick="updateTaskStatus('${t.taskId}', 'Acknowledged')" class="px-2.5 py-1 bg-brand-600 text-white rounded text-[11px] font-medium shadow-sm hover:bg-brand-700">Acknowledge</button>`;
-        }
-        if(t.status === 'Acknowledged' || t.status === 'Returned') {
-          return `<button onclick="updateTaskStatus('${t.taskId}', 'Submitted')" class="px-2.5 py-1 bg-emerald-600 text-white rounded text-[11px] font-medium shadow-sm hover:bg-emerald-700">Submit Work</button>`;
+          return `<button onclick="updateTask('${t.taskId}', 'Acknowledged')" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs shadow-sm hover:bg-blue-700 transition">Acknowledge</button>`;
+        } else if(t.status === 'Acknowledged' || t.status === 'Returned') {
+          return `<button onclick="openSubmitWorkModal('${t.taskId}')" class="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs shadow-sm hover:bg-emerald-700 transition">Submit Work</button>`;
         }
       }
-
       if((currentUser.role === 'Principal' || currentUser.role === 'HOD') && t.status === 'Submitted') {
         return `
-          <div class="inline-flex gap-1">
-            <button onclick="updateTaskStatus('${t.taskId}', 'Approved')" class="px-2 py-1 bg-emerald-600 text-white rounded text-[10px] font-bold">Approve</button>
-            <button onclick="updateTaskStatus('${t.taskId}', 'Returned')" class="px-2 py-1 bg-rose-600 text-white rounded text-[10px] font-bold">Return</button>
-          </div>
+          <button onclick="updateTask('${t.taskId}', 'Approved')" class="px-2 py-1 bg-emerald-600 text-white rounded text-xs mr-1 shadow-sm hover:bg-emerald-700">Approve</button>
+          <button onclick="updateTask('${t.taskId}', 'Returned')" class="px-2 py-1 bg-rose-600 text-white rounded text-xs shadow-sm hover:bg-rose-700">Return</button>
         `;
       }
-      return '<span class="text-slate-400 text-[10px]">-</span>';
+      return '-';
     }
 
-    async function updateTaskStatus(taskId, status) {
-      let feedback = "";
-      if(status === 'Returned') {
-        feedback = prompt("Provide change feedback or reason for returning:");
-        if(!feedback) return;
+    function openSubmitWorkModal(taskId) {
+      activeTaskForSubmission = taskId;
+      document.getElementById('submission-note').value = "";
+      document.getElementById('submission-file').value = "";
+      document.getElementById('submit-work-modal').classList.remove('hidden');
+    }
+
+    function closeSubmitModal() {
+      document.getElementById('submit-work-modal').classList.add('hidden');
+      activeTaskForSubmission = null;
+    }
+
+    async function confirmTaskSubmission() {
+      const note = document.getElementById('submission-note').value;
+      const fileInput = document.getElementById('submission-file');
+      let fileBase64 = "", fileName = "";
+
+      if(!note) return alert("Please enter a submission work note.");
+
+      if(fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        fileName = file.name;
+        fileBase64 = await convertBase64(file);
       }
 
-      const res = await apiRequest("updateTaskStatus", { taskId, status, feedback });
+      const res = await apiCall('updateTaskStatus', { 
+        taskId: activeTaskForSubmission, 
+        status: 'Submitted', 
+        feedback: '', 
+        submissionNote: note, 
+        fileBase64: fileBase64, 
+        fileName: fileName 
+      });
+
       alert(res.message);
-      syncDashboard();
+      triggerPushNotification("Task Submitted!", "Awaiting Principal/HOD Review.");
+      closeSubmitModal();
+      refreshDashboard(true);
     }
 
-    // --- ASSIGN TASK CONTROLLER ---
-    function populateAssignUsersList() {
-      const select = document.getElementById('task-assign-target');
-      select.innerHTML = '';
-      
-      (appData.users || []).forEach(u => {
-        if(u.email !== currentUser.email) {
-          select.innerHTML += `<option value="${u.email}">${u.name} (${u.role} - ${u.designation})</option>`;
-        }
-      });
+    async function updateTask(taskId, status) {
+      let feedback = "";
+      if(status === 'Returned') {
+        feedback = prompt("Enter feedback or changes required:");
+      }
+      const res = await apiCall('updateTaskStatus', { taskId: taskId, status: status, feedback: feedback });
+      alert(res.message);
+      triggerPushNotification("Task Updated!", `Status updated to ${status}`);
+      refreshDashboard(true);
     }
 
     async function handleAssignTask(e) {
       e.preventDefault();
-      const fileInput = document.getElementById('task-assign-file');
+      const fileInput = document.getElementById('task-file');
       let fileBase64 = "", fileName = "";
 
       if(fileInput.files.length > 0) {
         const file = fileInput.files[0];
         fileName = file.name;
-        fileBase64 = await convertFileToBase64(file);
+        fileBase64 = await convertBase64(file);
       }
 
       const taskData = {
-        title: document.getElementById('task-assign-title').value.trim(),
-        assigned_to: document.getElementById('task-assign-target').value,
-        priority: document.getElementById('task-assign-priority').value,
-        due_date: document.getElementById('task-assign-due').value,
-        description: document.getElementById('task-assign-desc').value.trim(),
+        title: document.getElementById('task-title').value,
+        assigned_to: document.getElementById('task-assign-to').value,
+        priority: document.getElementById('task-priority').value,
+        due_date: document.getElementById('task-due').value,
+        description: document.getElementById('task-desc').value,
         assigned_by: currentUser.email,
         fileBase64: fileBase64,
         fileName: fileName
       };
 
-      const res = await apiRequest("assignTask", { taskData });
+      const res = await apiCall('assignTask', { taskData: taskData });
       alert(res.message);
-      if(res.status === 'success') {
-        document.getElementById('assign-task-form').reset();
-        syncDashboard();
-        switchTab('tasks');
-      }
+
+      document.getElementById('assign-task-form').reset();
+
+      refreshDashboard(true);
+      switchTab(null, 'tasks');
     }
 
-    // --- DAILY WORK LOG ---
-    async function handleDailyWorkLog(e) {
-      e.preventDefault();
-      const work = document.getElementById('daily-work-input').value.trim();
-      if(!work) return;
+    async function submitDailyWork() {
+      const text = document.getElementById('daily-work-text').value;
+      if(!text) return alert("Please fill in daily work details.");
+      const res = await apiCall('submitDailyWork', { email: currentUser.email, name: currentUser.name, work: text });
+      alert(res.message);
+      document.getElementById('daily-work-text').value = "";
+      refreshDashboard(true);
+    }
 
-      const res = await apiRequest("submitDailyWork", { 
-        email: currentUser.email, 
-        name: currentUser.name, 
-        work 
+    async function markAttendance(type) {
+      const res = await apiCall('markAttendance', { email: currentUser.email, status: type });
+      alert(res.message);
+      refreshDashboard(true);
+    }
+
+    async function postAnnouncement() {
+      const title = document.getElementById('ann-title').value;
+      const content = document.getElementById('ann-body').value;
+      if(!title || !content) return alert("Please fill all fields.");
+      const res = await apiCall('createAnnouncement', { title: title, content: content, createdBy: currentUser.name });
+      alert(res.message);
+      document.getElementById('ann-title').value = "";
+      document.getElementById('ann-body').value = "";
+      refreshDashboard(true);
+    }
+
+    // Dynamic Hierarchical Faculty Map Rendering
+    function renderHierarchy() {
+      const principalNode = document.getElementById('tree-principal-node');
+      const hodNode = document.getElementById('tree-hod-node');
+      const staffNode = document.getElementById('tree-staff-node');
+
+      principalNode.innerHTML = '';
+      hodNode.innerHTML = '';
+      staffNode.innerHTML = '';
+
+      if(!dashboardCache.users || dashboardCache.users.length === 0) return;
+
+      dashboardCache.users.forEach(u => {
+        const cleanPhoto = getCleanImageUrl(u.photo);
+        const avatarHtml = cleanPhoto ? `<img src="${cleanPhoto}" class="w-full h-full object-cover">` : u.name.charAt(0);
+
+        const cardHtml = `
+          <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex items-center gap-3 shadow-sm hover:shadow-md transition">
+            <div class="w-12 h-12 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center overflow-hidden border-2 border-white shadow">
+              ${avatarHtml}
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-xs">${u.name}</h4>
+              <p class="text-xs text-blue-600 font-semibold">${u.designation || u.role}</p>
+              <span class="text-[10px] text-slate-400">${u.department || 'Pharmacy'}</span>
+            </div>
+          </div>
+        `;
+
+        if(u.role === 'Principal') {
+          principalNode.innerHTML += cardHtml;
+        } else if(u.role === 'HOD') {
+          hodNode.innerHTML += cardHtml;
+        } else {
+          staffNode.innerHTML += cardHtml;
+        }
       });
-
-      alert(res.message);
-      if(res.status === 'success') {
-        document.getElementById('daily-work-input').value = '';
-        syncDashboard();
-        switchTab('dashboard');
-      }
     }
 
-    // --- ATTENDANCE TRACKER ---
-    async function handleAttendance(status) {
-      const res = await apiRequest("markAttendance", { 
-        email: currentUser.email, 
-        status 
+    function populateAssignDropdown() {
+      const select = document.getElementById('task-assign-to');
+      select.innerHTML = '';
+      dashboardCache.users.forEach(u => {
+        if(u.email !== currentUser.email) {
+          select.innerHTML += `<option value="${u.email}">${u.name} (${u.role})</option>`;
+        }
       });
-      alert(res.message);
     }
 
-    // --- ANNOUNCEMENTS BROADCAST ---
-    async function submitAnnouncement() {
-      const title = document.getElementById('ann-input-title').value.trim();
-      const content = document.getElementById('ann-input-body').value.trim();
-      if(!title || !content) return alert("Fill announcement title & details!");
-
-      const res = await apiRequest("createAnnouncement", { 
-        title, 
-        content, 
-        createdBy: `${currentUser.name} (${currentUser.role})` 
-      });
-
-      alert(res.message);
-      if(res.status === 'success') {
-        document.getElementById('ann-input-title').value = '';
-        document.getElementById('ann-input-body').value = '';
-        syncDashboard();
-      }
-    }
-
-    function renderAnnouncementsFeed() {
-      const feed = document.getElementById('announcements-feed');
-      feed.innerHTML = '';
-      const list = appData.announcements || [];
-
-      if(list.length === 0) {
-        feed.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-6">No broadcasts posted.</p>`;
+    function renderAnnouncements() {
+      const container = document.getElementById('announcement-list');
+      container.innerHTML = '';
+      if(!dashboardCache.announcements || dashboardCache.announcements.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-4">No broadcasts posted.</p>`;
         return;
       }
-
-      list.forEach(a => {
-        feed.innerHTML += `
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-            <div class="flex items-center justify-between mb-1">
-              <h4 class="text-xs font-bold text-slate-900">${a.title}</h4>
-              <span class="text-[10px] text-slate-400 font-medium">${a.date}</span>
+      dashboardCache.announcements.forEach(a => {
+        container.innerHTML += `
+          <div class="p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
+            <div class="flex items-center justify-between">
+              <strong class="text-slate-800 text-xs">${a.title}</strong>
+              <span class="text-[10px] text-slate-400">${a.date}</span>
             </div>
-            <p class="text-xs text-slate-600 leading-relaxed">${a.content}</p>
-            <div class="text-[10px] text-brand-600 font-medium mt-2">By: ${a.by}</div>
+            <p class="text-xs text-slate-600 mt-1">${a.content}</p>
           </div>
         `;
       });
     }
 
-    function renderDailyWorkFeed() {
-      const feed = document.getElementById('daily-work-feed');
-      feed.innerHTML = '';
-      const list = appData.dailyWork || [];
-
-      if(list.length === 0) {
-        feed.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-6">No recent work logs.</p>`;
+    function renderDailyWork() {
+      const container = document.getElementById('daily-work-summary');
+      container.innerHTML = '';
+      if(!dashboardCache.dailyWork || dashboardCache.dailyWork.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-4">No recent work logs.</p>`;
         return;
       }
-
-      list.forEach(w => {
-        feed.innerHTML += `
-          <div class="p-3 rounded-xl border border-slate-100 bg-white shadow-2xs">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-bold text-slate-800">${w.user}</span>
+      dashboardCache.dailyWork.forEach(w => {
+        container.innerHTML += `
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+            <div class="flex items-center justify-between">
+              <strong class="text-slate-800 text-xs">${w.user}</strong>
               <span class="text-[10px] text-slate-400">${w.date}</span>
             </div>
-            <p class="text-xs text-slate-600 whitespace-pre-line">${w.work}</p>
+            <p class="text-xs text-slate-600 mt-1">${w.work}</p>
           </div>
         `;
       });
     }
 
-    function renderHierarchyMap() {
-      const grid = document.getElementById('hierarchy-grid');
-      grid.innerHTML = '';
+    function renderProfile() {
+      document.getElementById('profile-name-text').innerText = currentUser.name;
+      document.getElementById('profile-role-text').innerText = currentUser.role;
+      document.getElementById('profile-dept-text').innerText = currentUser.department;
+      document.getElementById('profile-email-text').innerText = currentUser.email;
+      document.getElementById('profile-desig-text').innerText = currentUser.designation;
 
-      (appData.users || []).forEach(u => {
-        const avatar = u.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=0D8ABC&color=fff`;
-        grid.innerHTML += `
-          <div class="p-4 rounded-xl border border-slate-200 bg-white flex items-center gap-3.5 shadow-2xs">
-            <img src="${avatar}" class="w-12 h-12 rounded-full object-cover border border-slate-200">
-            <div class="min-w-0 flex-1">
-              <h4 class="text-xs font-bold text-slate-900 truncate">${u.name}</h4>
-              <p class="text-[11px] font-semibold text-brand-600">${u.role}</p>
-              <p class="text-[10px] text-slate-500 truncate">${u.designation} • ${u.email}</p>
-            </div>
-          </div>
-        `;
-      });
+      const avatarBox = document.getElementById('profile-avatar-display');
+      const cleanPhoto = getCleanImageUrl(currentUser.photo_url);
+      if(cleanPhoto) {
+        avatarBox.innerHTML = `<img src="${cleanPhoto}" class="w-full h-full object-cover">`;
+      } else {
+        avatarBox.innerText = currentUser.name.charAt(0).toUpperCase();
+      }
+
+      document.getElementById('edit-name').value = currentUser.name;
+      document.getElementById('edit-dept').value = currentUser.department;
+      document.getElementById('edit-desig').value = currentUser.designation;
     }
 
-    // --- TAB SWITCHER ---
-    function switchTab(tab) {
-      const views = ['dashboard', 'tasks', 'assign', 'daily-work', 'hierarchy', 'profile'];
-      views.forEach(v => {
-        document.getElementById(`view-${v}`).classList.add('hidden');
-        const nav = document.getElementById(`nav-${v}`);
-        if(nav) nav.className = "nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all";
-      });
+    function toggleEditProfile() {
+      const cardView = document.getElementById('profile-card-view');
+      const editForm = document.getElementById('profile-edit-form');
+      const btn = document.getElementById('edit-profile-btn');
 
-      document.getElementById(`view-${tab}`).classList.remove('hidden');
-      const activeNav = document.getElementById(`nav-${tab}`);
-      if(activeNav) activeNav.className = "nav-item active flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all bg-brand-600 text-white";
-
-      // Title Dynamic Config
-      const titles = {
-        'dashboard': ['Dashboard Overview', 'Real-time operational status & notices'],
-        'tasks': ['Task Management Matrix', 'View and act on assigned directives'],
-        'assign': ['Assign Directives', 'Delegate responsibilities to staff'],
-        'daily-work': ['Faculty Daily Progress Log', 'Submit today\'s academic activities'],
-        'hierarchy': ['Faculty Directory Map', 'G.E.S. Pharmacy staff network'],
-        'profile': ['User Profile', 'Personal credentials and details']
-      };
-
-      if(titles[tab]) {
-        document.getElementById('view-title').innerText = titles[tab][0];
-        document.getElementById('view-subtitle').innerText = titles[tab][1];
+      if(editForm.classList.contains('hidden')) {
+        cardView.classList.add('hidden');
+        editForm.classList.remove('hidden');
+        btn.classList.add('hidden');
+      } else {
+        editForm.classList.add('hidden');
+        cardView.classList.remove('hidden');
+        btn.classList.remove('hidden');
       }
     }
 
-    // File to Base64 Converter
-    function convertFileToBase64(file) {
+    async function handleUpdateProfile(e) {
+      e.preventDefault();
+      const photoInput = document.getElementById('edit-photo-file');
+      let fileBase64 = "", fileName = "";
+
+      if(photoInput.files.length > 0) {
+        const file = photoInput.files[0];
+        fileName = file.name;
+        fileBase64 = await convertBase64(file);
+      }
+
+      const updatedData = {
+        name: document.getElementById('edit-name').value,
+        department: document.getElementById('edit-dept').value,
+        designation: document.getElementById('edit-desig').value,
+        fileBase64: fileBase64,
+        fileName: fileName,
+        photo_url: currentUser.photo_url || ""
+      };
+
+      const res = await apiCall('updateUserProfile', { userEmail: currentUser.email, userData: updatedData });
+      alert(res.message);
+      if(res.status === 'success') {
+        currentUser = res.data;
+        localStorage.setItem('ges_erp_user', JSON.stringify(currentUser));
+        updateUserDisplayHeaders();
+        renderProfile();
+        toggleEditProfile();
+        refreshDashboard(true);
+      }
+    }
+
+    function convertBase64(file) {
       return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(file);
+        fileReader.onload = () => resolve(fileReader.result);
+        fileReader.onerror = (error) => reject(error);
       });
+    }
+
+    function logout() {
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      localStorage.removeItem('ges_erp_user');
+      location.reload();
     }
   </script>
 </body>
